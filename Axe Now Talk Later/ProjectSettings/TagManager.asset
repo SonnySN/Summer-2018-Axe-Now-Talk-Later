@@ -3,7 +3,16 @@
 --- !u!78 &1
 TagManager:
   serializedVersion: 2
-  tags: []
+  tags:
+  - Damager
+  - TextBox
+  - ShowBossSlider
+  - RedFire
+  - Enemy
+  - Key
+  - Lock
+  - Fire
+  - Stamepede
   layers:
   - Default
   - TransparentFX
@@ -14,7 +23,7 @@ TagManager:
   - 
   - 
   - PostProcessing
-  - 
+  - Player
   - 
   - 
   - 
