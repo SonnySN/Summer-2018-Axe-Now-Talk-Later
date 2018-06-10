@@ -7,6 +7,7 @@ using UnityEngine;
 /// Movement for a GameObject and Rotation for a child Player Model
 /// Inherits from PlayerStats
 /// </summary>
+
 public class PlayerMovement : PlayerStats {
 
     //Call PlayerMovement.Instance for easy get PlayerMovement script.
@@ -31,6 +32,7 @@ public class PlayerMovement : PlayerStats {
     float axisX;
     float axisZ;
     float originalSpeed;
+
     public static PlayerMovement Instance
     {
         get
@@ -79,9 +81,6 @@ public class PlayerMovement : PlayerStats {
         else if(Input.GetKeyDown(KeyCode.F3))
             s_ModeParadigm.Change(ModeParadigm.DefenceMode, this);
 
-        if (Input.GetKeyDown(KeyCode.Space) && grounded)
-            m_Rigidbody.AddForce(Vector3.up * jumpForce);
-
         if (Input.GetKeyDown(KeyCode.LeftShift))
         {
             originalSpeed = moveSpeed;
@@ -90,15 +89,30 @@ public class PlayerMovement : PlayerStats {
         if (Input.GetKeyUp(KeyCode.LeftShift))
         {
             moveSpeed = originalSpeed;
-
         }
 
         Rotation();
     }
+    bool dashing;
+
+    IEnumerator ChangeDrag()
+    {
+        dashing = true;
+        yield return new WaitForSeconds(.35f);
+        dashing = false;
+    }
 
     void FixedUpdate ()
     {
-        if (m_Rigidbody)
+        if (Input.GetKeyDown(KeyCode.Space) && grounded)
+            m_Rigidbody.AddForce(Vector3.up * jumpForce);
+
+        if (Input.GetMouseButtonDown(1))
+            StartCoroutine(ChangeDrag());
+        
+        if (dashing)
+            m_Rigidbody.velocity = (s_PlayerAnimation.transform.forward * dashForce);
+        else if (m_Rigidbody)
         {
             moveVector = new Vector3(axisX, 0, axisZ) * moveSpeed;
             newAngle = new Vector3(axisX, 0, axisZ) * moveSpeed; ;

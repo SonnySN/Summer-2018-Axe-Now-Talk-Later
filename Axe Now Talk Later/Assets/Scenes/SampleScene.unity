@@ -920,6 +920,11 @@ Prefab:
       propertyPath: s_ModeParadigm
       value: 
       objectReference: {fileID: 2015034593}
+    - target: {fileID: 54033775688519774, guid: f7e391aaca53cf445b06e8f82fff9129,
+        type: 2}
+      propertyPath: m_Mass
+      value: 3
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: f7e391aaca53cf445b06e8f82fff9129, type: 2}
   m_IsPrefabParent: 0

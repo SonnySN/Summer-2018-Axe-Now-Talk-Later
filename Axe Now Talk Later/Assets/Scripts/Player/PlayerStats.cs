@@ -13,6 +13,7 @@ public class PlayerStats : MonoBehaviour {
     public float attackDamage;
     public float jumpForce;
     public float moveSpeed;
+    public float dashForce;
 
     public float m_FallMultiplier;
     public float m_LowJumpMultiplier;
@@ -23,7 +24,7 @@ public class PlayerStats : MonoBehaviour {
         armorAmount = 100;
         moveSpeed = 1.5f;
         jumpForce = 1500;
-
+        dashForce = 10;
         m_FallMultiplier = 6.25f;
         m_LowJumpMultiplier = 1.5f;
     }
