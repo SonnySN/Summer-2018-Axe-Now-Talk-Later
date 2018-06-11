@@ -13,11 +13,13 @@ public class PlayerMovement : PlayerStats {
     //Call PlayerMovement.Instance for easy get PlayerMovement script.
     public static PlayerMovement instance;
     public PlayerController s_PlayerController;
+
     //On player model with Animator.
     public PlayerAnimation s_PlayerAnimation;
+    public Animator m_Animator;
+
     //Contains Mode/Paradigm information
     public ModeParadigm s_ModeParadigm;
-
     public Transform lineStart;
     public Transform lineEnd;
 
@@ -32,6 +34,11 @@ public class PlayerMovement : PlayerStats {
     float axisX;
     float axisZ;
     float originalSpeed;
+
+    bool attacking;
+    bool dashing;
+    bool rolling;
+    bool blocking;
 
     public static PlayerMovement Instance
     {
@@ -58,28 +65,48 @@ public class PlayerMovement : PlayerStats {
 
         m_Rigidbody = GetComponent<Rigidbody>();
         if (!m_Rigidbody)
+        {
             m_Rigidbody = gameObject.AddComponent<Rigidbody>();
+            m_Rigidbody.mass = 3;
+            m_Rigidbody.constraints = RigidbodyConstraints.FreezeRotation;
+        }
 
         s_PlayerAnimation = transform.GetChild(0).GetComponent<PlayerAnimation>();
         if (!s_PlayerAnimation)
             Debug.LogError("PlayerAnimation not found");
+
+        m_Animator = s_PlayerAnimation.gameObject.GetComponent<Animator>();
+        if (!m_Animator)
+            Debug.LogError("Animator not found");
 
         currentAngle = s_PlayerAnimation.transform.eulerAngles;
     }
 
     void Update()
     {
-        Raycasting();
+        JumpLineCast();
 
         axisX = Input.GetAxis("Horizontal");
         axisZ = Input.GetAxis("Vertical");
 
+        //Must tag all combat animations for this bool to work.
+        attacking = m_Animator.GetCurrentAnimatorStateInfo(0).IsTag("Combat");
+
         if (Input.GetKeyDown(KeyCode.F1))
+        {
             s_ModeParadigm.Change(ModeParadigm.AttackMode, this);
+            m_Animator.speed = 1.25f;
+        }
         else if (Input.GetKeyDown(KeyCode.F2))
+        {
             s_ModeParadigm.Change(ModeParadigm.NeutralMode, this);
-        else if(Input.GetKeyDown(KeyCode.F3))
+            m_Animator.speed = 1f;
+        }
+        else if (Input.GetKeyDown(KeyCode.F3))
+        {
             s_ModeParadigm.Change(ModeParadigm.DefenceMode, this);
+            m_Animator.speed = .85f;
+        }
 
         if (Input.GetKeyDown(KeyCode.LeftShift))
         {
@@ -91,15 +118,42 @@ public class PlayerMovement : PlayerStats {
             moveSpeed = originalSpeed;
         }
 
+        //This timing will change. Combos etc.
+        if (Input.GetMouseButtonDown(0) && !attacking)
+        {
+            m_Animator.SetTrigger("Attack");
+        }
+
+        if (Input.GetMouseButtonDown(1) && !attacking)
+        {
+            if (ModeParadigm.currentMode == ModeParadigm.AttackMode && !dashing)
+                StartCoroutine(DashCoroutine());
+            else if (ModeParadigm.currentMode == ModeParadigm.NeutralMode && !rolling)
+                StartCoroutine(RollCoroutine());
+            else if (ModeParadigm.currentMode == ModeParadigm.DefenceMode)
+                Block();
+        }
+        else if (Input.GetMouseButtonDown(1))
+            if (ModeParadigm.currentMode == ModeParadigm.DefenceMode)
+                Block();
         Rotation();
     }
-    bool dashing;
 
-    IEnumerator ChangeDrag()
+    IEnumerator DashCoroutine()
     {
         dashing = true;
-        yield return new WaitForSeconds(.35f);
+        yield return new WaitForSeconds(.15f);
         dashing = false;
+    }
+    IEnumerator RollCoroutine()
+    {
+        rolling = true;
+        yield return new WaitForSeconds(.55f);
+        rolling = false;
+    }
+    void Block()
+    {
+        blocking = !blocking;
     }
 
     void FixedUpdate ()
@@ -107,16 +161,19 @@ public class PlayerMovement : PlayerStats {
         if (Input.GetKeyDown(KeyCode.Space) && grounded)
             m_Rigidbody.AddForce(Vector3.up * jumpForce);
 
-        if (Input.GetMouseButtonDown(1))
-            StartCoroutine(ChangeDrag());
-        
         if (dashing)
-            m_Rigidbody.velocity = (s_PlayerAnimation.transform.forward * dashForce);
+            m_Rigidbody.velocity = (s_PlayerAnimation.transform.forward * dashForce * 3);
+        else if (rolling)
+            m_Rigidbody.AddForce(s_PlayerAnimation.transform.forward * dashForce * 3, ForceMode.Acceleration);
+        else if (blocking || attacking)
+            m_Rigidbody.velocity = Vector3.zero;
         else if (m_Rigidbody)
         {
             moveVector = new Vector3(axisX, 0, axisZ) * moveSpeed;
             newAngle = new Vector3(axisX, 0, axisZ) * moveSpeed; ;
 
+            //Clamp the movement so that its not faster when moving normally.
+            //Clamping only occurs during normal movement. So dashing is not affected.
             Vector3 clampVel = m_Rigidbody.velocity;
             clampVel.x = Mathf.Clamp(clampVel.x, -moveSpeed, moveSpeed);
             clampVel.z = Mathf.Clamp(clampVel.z, -moveSpeed, moveSpeed);
@@ -133,8 +190,6 @@ public class PlayerMovement : PlayerStats {
         //{
         //    m_Rigidbody.velocity += Vector3.up * Physics.gravity.y * (m_LowJumpMultiplier - 1) * Time.deltaTime;
         //}
-
-
     }
 
     //Rotate Player Model
@@ -145,14 +200,14 @@ public class PlayerMovement : PlayerStats {
             Mathf.LerpAngle(currentAngle.y, newAngle.y, Time.deltaTime * 7),
             Mathf.LerpAngle(currentAngle.z, newAngle.z, Time.deltaTime * 7));
 
+        //if no input
         if (axisX != 0 || axisZ != 0)
             s_PlayerAnimation.transform.rotation = Quaternion.LookRotation(currentAngle);
     }
 
-    void Raycasting()
+    void JumpLineCast()
     {
         Debug.DrawLine(lineStart.position, lineEnd.position, Color.green);
         grounded = Physics.Linecast(lineStart.position, lineEnd.position);
-        Debug.Log(grounded);
     }
 }

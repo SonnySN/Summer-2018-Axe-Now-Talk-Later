@@ -18,6 +18,10 @@ public class PlayerStats : MonoBehaviour {
     public float m_FallMultiplier;
     public float m_LowJumpMultiplier;
 
+    /// <summary>
+    /// Sets default/Neutral mode values, 
+    /// Also used as reference for conversions to diff modes.
+    /// </summary>
     public void InitialValues()
     {
         attackDamage = 25;
