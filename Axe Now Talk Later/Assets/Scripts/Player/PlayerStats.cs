@@ -27,7 +27,7 @@ public class PlayerStats : MonoBehaviour {
         attackDamage = 25;
         armorAmount = 100;
         moveSpeed = 1.5f;
-        jumpForce = 1500;
+        jumpForce = 1250;
         dashForce = 10;
         m_FallMultiplier = 6.25f;
         m_LowJumpMultiplier = 1.5f;

@@ -34,7 +34,7 @@ public class PlayerMovement : PlayerStats {
     float axisX;
     float axisZ;
     float originalSpeed;
-
+    float rotationSpeed;
     bool attacking;
     bool dashing;
     bool rolling;
@@ -79,6 +79,7 @@ public class PlayerMovement : PlayerStats {
         if (!m_Animator)
             Debug.LogError("Animator not found");
 
+        rotationSpeed = 7;
         currentAngle = s_PlayerAnimation.transform.eulerAngles;
     }
 
@@ -95,7 +96,7 @@ public class PlayerMovement : PlayerStats {
         if (Input.GetKeyDown(KeyCode.F1))
         {
             s_ModeParadigm.Change(ModeParadigm.AttackMode, this);
-            m_Animator.speed = 1.25f;
+            m_Animator.speed = 1.66f;
         }
         else if (Input.GetKeyDown(KeyCode.F2))
         {
@@ -105,7 +106,7 @@ public class PlayerMovement : PlayerStats {
         else if (Input.GetKeyDown(KeyCode.F3))
         {
             s_ModeParadigm.Change(ModeParadigm.DefenceMode, this);
-            m_Animator.speed = .85f;
+            m_Animator.speed = .66f;
         }
 
         if (Input.GetKeyDown(KeyCode.LeftShift))
@@ -113,19 +114,21 @@ public class PlayerMovement : PlayerStats {
             originalSpeed = moveSpeed;
             moveSpeed *= 1.25f;
         }
-        if (Input.GetKeyUp(KeyCode.LeftShift))
+        else if (Input.GetKeyUp(KeyCode.LeftShift))
         {
             moveSpeed = originalSpeed;
         }
 
         //This timing will change. Combos etc.
-        if (Input.GetMouseButtonDown(0) && !attacking)
+        if (Input.GetMouseButtonDown(0) && !attacking && !dashing && !rolling && !blocking)
         {
             m_Animator.SetTrigger("Attack");
         }
 
-        if (Input.GetMouseButtonDown(1) && !attacking)
+        if (Input.GetMouseButtonDown(1))
         {
+            //m_Animator.ResetTrigger("Attack");
+            m_Animator.Play("standing walk forward 0");
             if (ModeParadigm.currentMode == ModeParadigm.AttackMode && !dashing)
                 StartCoroutine(DashCoroutine());
             else if (ModeParadigm.currentMode == ModeParadigm.NeutralMode && !rolling)
@@ -165,8 +168,10 @@ public class PlayerMovement : PlayerStats {
             m_Rigidbody.velocity = (s_PlayerAnimation.transform.forward * dashForce * 3);
         else if (rolling)
             m_Rigidbody.AddForce(s_PlayerAnimation.transform.forward * dashForce * 3, ForceMode.Acceleration);
-        else if (blocking || attacking)
+        else if (blocking)
             m_Rigidbody.velocity = Vector3.zero;
+        else if (attacking)
+            m_Rigidbody.velocity = (s_PlayerAnimation.transform.forward);
         else if (m_Rigidbody)
         {
             moveVector = new Vector3(axisX, 0, axisZ) * moveSpeed;
